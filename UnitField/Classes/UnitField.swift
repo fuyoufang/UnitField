@@ -38,6 +38,7 @@ public enum UnitFieldStyle {
 open class UnitField: UIControl {
     
     public var delegate: UnitFieldDelegate?
+    public var shouldChangeCharacters: ((_ range: Range<Int>, _ string: String) -> Bool)?
     
     // MARK: UITextInput 相关属性
     public var selectedTextRange: UITextRange?
@@ -764,7 +765,11 @@ extension UnitField: UITextInput {
         }
         let range = Range<Int>(uncheckedBounds: (lower: (self.text?.count ?? 0), upper: text.count))
         
-        if !(self.delegate?.unitField(self, shouldChangeCharactersInRange: range, replacementString: text) ?? true) {
+        guard self.delegate?.unitField(self, shouldChangeCharactersInRange: range, replacementString: text) ?? true else {
+            return
+        }
+        
+        guard self.shouldChangeCharacters?(range, text) ?? true else {
             return
         }
         

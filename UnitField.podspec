@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'UnitField'
-  s.version          = '0.1.0'
+  s.version          = '0.2.0'
   s.summary          = 'This is an elegant and concise password/verification code text field.'
 
   s.description      = <<-DESC
