@@ -2,6 +2,7 @@ use_frameworks!
 
 target 'UnitField_Example' do
   pod 'UnitField', :path => '../'
+  pod 'RxUnitField', :path => '../Extension'
 
   target 'UnitField_Tests' do
     inherit! :search_paths

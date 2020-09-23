@@ -11,13 +11,24 @@ PODS:
     - FBSnapshotTestCase (~> 2.0)
     - Nimble (~> 7.0)
   - Quick (1.2.0)
-  - UnitField (0.1.0)
+  - RxCocoa (5.1.1):
+    - RxRelay (~> 5)
+    - RxSwift (~> 5)
+  - RxRelay (5.1.1):
+    - RxSwift (~> 5)
+  - RxSwift (5.1.1)
+  - RxUnitField (0.2.0):
+    - RxCocoa
+    - RxSwift
+    - UnitField (~> 0.3.0)
+  - UnitField (0.3.0)
 
 DEPENDENCIES:
   - FBSnapshotTestCase (~> 2.1.4)
   - Nimble (~> 7.0)
   - Nimble-Snapshots (~> 6.3.0)
   - Quick (~> 1.2.0)
+  - RxUnitField (from `../Extension`)
   - UnitField (from `../`)
 
 SPEC REPOS:
@@ -26,8 +37,13 @@ SPEC REPOS:
     - Nimble
     - Nimble-Snapshots
     - Quick
+    - RxCocoa
+    - RxRelay
+    - RxSwift
 
 EXTERNAL SOURCES:
+  RxUnitField:
+    :path: "../Extension"
   UnitField:
     :path: "../"
 
@@ -36,8 +52,12 @@ SPEC CHECKSUMS:
   Nimble: 051e3d8912d40138fa5591c78594f95fb172af37
   Nimble-Snapshots: f5459b5b091678dc942d03ec4741cacb58ba4a52
   Quick: 58d203b1c5e27fff7229c4c1ae445ad7069a7a08
-  UnitField: e4932b94ae1b6b89df36f09154d56427c4b6c33e
+  RxCocoa: 32065309a38d29b5b0db858819b5bf9ef038b601
+  RxRelay: d77f7d771495f43c556cbc43eebd1bb54d01e8e9
+  RxSwift: 81470a2074fa8780320ea5fe4102807cb7118178
+  RxUnitField: b5411a7b793ebde69218f9715e56f0da36e3697d
+  UnitField: cea7a9bf1d71bca367df64ddb2b561fe0473bbce
 
-PODFILE CHECKSUM: 818a7db7647040bb0967cc7698ff3b868eb9546e
+PODFILE CHECKSUM: 8595a69b854d7c18898f050fe6025c8f4e43cb4e
 
 COCOAPODS: 1.9.3
