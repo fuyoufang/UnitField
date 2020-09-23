@@ -294,11 +294,11 @@ open class UnitField: UIControl {
     
     // MARK: Initialize
     
-    @objc convenience init(inputUnitCount count: UInt) {
+    public convenience init(inputUnitCount count: UInt) {
         self.init(style: .border, inputUnitCount: count)
     }
     
-    init(style: UnitFieldStyle, inputUnitCount count: UInt) {
+    public init(style: UnitFieldStyle, inputUnitCount count: UInt) {
         assert(count > 0, "UnitField must have one or more input units.")
         assert(count <= 8, "UnitField can not have more than 8 input units.")
         self.style = style
