@@ -18,6 +18,8 @@ class ViewController: UIViewController {
         
         unitField.backgroundColor = .white
         _ = unitField.becomeFirstResponder()
+        
+        
     }
 
     override func didReceiveMemoryWarning() {

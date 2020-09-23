@@ -9,19 +9,19 @@
 import Foundation
 
 class UnitFieldTextRange: UITextRange {
-    override var start: UITextPosition {
+    override var start: UnitFieldTextPosition {
         get {
             return _start
         }
     }
     
-    override var end: UITextPosition {
+    override var end: UnitFieldTextPosition {
         get {
             return _end
         }
     }
-    var _start: UnitFieldTextPosition
-    var _end: UnitFieldTextPosition
+    let _start: UnitFieldTextPosition
+    let _end: UnitFieldTextPosition
     
     init(start: UnitFieldTextPosition, end: UnitFieldTextPosition) {
         self._start = start

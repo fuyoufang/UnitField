@@ -8,19 +8,20 @@
 
 import UIKit
 
-//#ifdef NSFoundationVersionNumber_iOS_9_x_Max
-//    NSNotificationName const WLUnitFieldDidBecomeFirstResponderNotification = @"WLUnitFieldDidBecomeFirstResponderNotification";
-//    NSNotificationName const WLUnitFieldDidResignFirstResponderNotification = @"WLUnitFieldDidResignFirstResponderNotification";
-//#else
-//    NSString *const WLUnitFieldDidBecomeFirstResponderNotification = @"WLUnitFieldDidBecomeFirstResponderNotification";
-//    NSString *const WLUnitFieldDidResignFirstResponderNotification = @"WLUnitFieldDidResignFirstResponderNotification";
-//#endif
-
+extension Notification.Name {
+    public static let unitFieldDidBecomeFirstResponderNotification = Notification.Name(rawValue: "UnitFieldDidBecomeFirstResponderNotification")
+    public static let unitFieldDidResignFirstResponderNotification = Notification.Name(rawValue: "UnitFieldDidResignFirstResponderNotification")
+}
 
 public protocol UnitFieldDelegate: UITextFieldDelegate {
-
+    
     func unitField(_ uniField: UnitField, shouldChangeCharactersInRange range: Range<Int>, replacementString string: String) -> Bool
+}
 
+extension UnitFieldDelegate {
+    func unitField(_ uniField: UnitField, shouldChangeCharactersInRange range: Range<Int>, replacementString string: String) -> Bool {
+        return true
+    }
 }
 
 /**
@@ -29,18 +30,43 @@ public protocol UnitFieldDelegate: UITextFieldDelegate {
  - WLUnitFieldStyleBorder: 边框样式, UnitField 的默认样式
  - WLUnitFieldStyleUnderline: 下滑线样式
  */
-enum UnitFieldStyle {
+public enum UnitFieldStyle {
     case border
     case underline
 }
-
-//@protocol WLUnitFieldDelegate;
-
 
 open class UnitField: UIControl {
     
     public var delegate: UnitFieldDelegate?
     
+    // MARK: UITextInput 相关属性
+    public var selectedTextRange: UITextRange?
+    public var markedTextStyle: [NSAttributedString.Key : Any]?
+    public var markedTextRange: UITextRange? = nil
+    public var inputDelegate: UITextInputDelegate?
+    public lazy var tokenizer: UITextInputTokenizer = UITextInputStringTokenizer(textInput: self)
+    // UITextInputTraits 代理中的属性
+    public var isSecureTextEntry: Bool = false {
+        didSet {
+            resetCursorStateIfNeeded()
+        }
+    }
+    
+    @available(iOS 10.0, *)
+    public var textContentType: UITextContentType? {
+        get {
+            return _textContentType
+        }
+        set {
+            _textContentType = newValue
+        }
+    }
+    
+    public var keyboardType: UIKeyboardType = .numberPad
+    public var returnKeyType: UIReturnKeyType = .done
+    public var enablesReturnKeyAutomatically: Bool = true
+    public var autocorrectionType: UITextAutocorrectionType = .no
+    public var autocapitalizationType: UITextAutocapitalizationType = .none
     /**
      保留的用户输入的字符串，最好使用数字字符串，因为目前还不支持其他字符。
      */
@@ -76,28 +102,14 @@ open class UnitField: UIControl {
         }
     }
     
-    
-    open override var backgroundColor: UIColor? {
-        didSet {
-            super.backgroundColor = backgroundColor
-            resetCursorStateIfNeeded()
-        }
-    }
-    
-    open override var tintColor: UIColor! {
-        didSet {
-            super.tintColor = tintColor
-            resetCursorStateIfNeeded()
-        }
-    }
-    
+    // MARK: 样式配置属性
     
     //    #if TARGET_INTERFACE_BUILDER
     /**
      允许输入的个数。
      目前 WLUnitField 允许的输入单元个数区间控制在 1 ~ 8 个。任何超过该范围内的赋值行为都将被忽略。
      */
-    var inputUnitCount: UInt = 6 {
+    public var inputUnitCount: UInt = 6 {
         didSet {
             if inputUnitCount > 8 || inputUnitCount < 1 {
                 inputUnitCount = oldValue
@@ -111,16 +123,12 @@ open class UnitField: UIControl {
     /**
      UnitField 的外观风格, 默认为 WLUnitFieldStyleBorder.
      */
-    var style: UnitFieldStyle = .border {
-        didSet {
-            resetCursorStateIfNeeded()
-        }
-    }
+    public let style: UnitFieldStyle
     
     //    #endif
     
     /**
-     每个 Unit 之间的距离，默认为 0
+     每个 Unit 之间的距离
      ┌┈┈┈┬┈┈┈┬┈┈┈┬┈┈┈┐
      ┆ 1 ┆ 2 ┆ 3 ┆ 4 ┆       unitSpace is 0.
      └┈┈┈┴┈┈┈┴┈┈┈┴┈┈┈┘
@@ -128,7 +136,7 @@ open class UnitField: UIControl {
      ┆ 1 ┆┆ 2 ┆┆ 3 ┆┆ 4 ┆    unitSpace is 6
      └┈┈┈┘└┈┈┈┘└┈┈┈┘└┈┈┈┘
      */
-    var unitSpace: Int = 0 {
+    public var unitSpace: CGFloat = 12 {
         didSet {
             if (unitSpace < 2) {
                 unitSpace = 0
@@ -148,7 +156,7 @@ open class UnitField: UIControl {
      ┆ 1 ┆ 2 ┆ 3 ┆ 4 ┆       unitSpace is 0, borderRadius is 4.
      ╰┈┈┈┴┈┈┈┴┈┈┈┴┈┈┈╯
      */
-    var borderRadius: CGFloat = 0 {
+    public var borderRadius: CGFloat = 4 {
         didSet {
             if (borderRadius < 0) {
                 borderRadius = oldValue
@@ -161,7 +169,7 @@ open class UnitField: UIControl {
     /**
      设置边框宽度，默认为 1。
      */
-    var borderWidth: CGFloat = 1 {
+    public var borderWidth: CGFloat = 1 {
         didSet {
             if (borderWidth < 0) {
                 borderWidth = oldValue
@@ -174,7 +182,7 @@ open class UnitField: UIControl {
     /**
      设置文本字体
      */
-    var textFont: UIFont = UIFont.systemFont(ofSize: 22) {
+    public var textFont: UIFont = UIFont.systemFont(ofSize: 22) {
         didSet {
             resetCursorStateIfNeeded()
         }
@@ -183,20 +191,18 @@ open class UnitField: UIControl {
     /**
      设置文本颜色
      */
-    var textColor: UIColor = UIColor.darkGray {
+    public var textColor: UIColor = UIColor.darkGray {
         didSet {
             resetCursorStateIfNeeded()
         }
     }
-    
-    //    var tintColor: UIColor
     
     /**
      如果需要完成一个 unit 输入后显示地指定已完成的 unit 颜色，可以设置该属性。默认为 nil。
      注意：
      该属性仅在`unitSpace`属性值大于 2 时有效。在连续模式下，不适合颜色跟踪。可以考虑使用`cursorColor`替代
      */
-    var trackTintColor: UIColor? {
+    public var trackTintColor: UIColor? = .orange {
         didSet {
             resetCursorStateIfNeeded()
         }
@@ -205,9 +211,9 @@ open class UnitField: UIControl {
     /**
      用于提示输入的焦点所在位置，设置该值后会产生一个光标闪烁动画，如果设置为空，则不生成光标动画。
      */
-    var cursorColor: UIColor = .orange {
+    public var cursorColor: UIColor? = .orange {
         didSet {
-            cursorLayer.backgroundColor = cursorColor.cgColor
+            cursorLayer.backgroundColor = cursorColor?.cgColor
             resetCursorStateIfNeeded()
         }
     }
@@ -215,20 +221,54 @@ open class UnitField: UIControl {
     /**
      当输入完成后，是否需要自动取消第一响应者。默认为 NO。
      */
-    var autoResignFirstResponderWhenInputFinished = false
+    public var autoResignFirstResponderWhenInputFinished = false
     
     /**
      每个 unitfield 的大小, 默认为 44x44
      */
-    var unitSize: CGSize = CGSize(width: 44, height: 44) {
+    public var unitSize: CGSize = CGSize(width: 44, height: 44) {
         didSet {
             resetCursorStateIfNeeded()
         }
     }
     
-    var characters = [Character]()
+    public var unitBackgroundColor: UIColor? {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
     
-    let cursorLayer: CALayer = {
+    open override var backgroundColor: UIColor? {
+        didSet {
+            super.backgroundColor = backgroundColor
+            resetCursorStateIfNeeded()
+        }
+    }
+    
+    open override var tintColor: UIColor! {
+        didSet {
+            super.tintColor = tintColor
+            resetCursorStateIfNeeded()
+        }
+    }
+    
+    // MARK: Private Properties
+    private lazy var _textContentType: UITextContentType? = {
+        /**
+         Supporting iOS12 SMS verification code, keyboardType must be UIKeyboardTypeNumberPad to localizable.
+         
+         Must set textContentType to UITextContentTypeOneTimeCode
+         */
+        if #available(iOS 12.0, *) {
+            return .oneTimeCode
+        } else {
+            return nil
+        }
+    }()
+    
+    private var characters = [Character]()
+    
+    private let cursorLayer: CALayer = {
         let cursorLayer = CALayer()
         cursorLayer.isHidden = true
         cursorLayer.opacity = 1
@@ -247,92 +287,40 @@ open class UnitField: UIControl {
         
         return cursorLayer
     }()
-    //
-    var mBackgroundColor: UIColor = .clear
+    
     var mCtx: CGContext?
-    //
     var mMarkedText: String? = nil
+    
+    // MARK: Initialize
     
     @objc convenience init(inputUnitCount count: UInt) {
         self.init(style: .border, inputUnitCount: count)
     }
-    
     
     init(style: UnitFieldStyle, inputUnitCount count: UInt) {
         assert(count > 0, "UnitField must have one or more input units.")
         assert(count <= 8, "UnitField can not have more than 8 input units.")
         self.style = style
         self.inputUnitCount = count
-        if #available(iOS 12.0, *) {
-            textContentType = .oneTimeCode
-        } else if #available(iOS 10.0, *) {
-            #warning("todo")
-            textContentType = .name
-        } else {
-            textContentType = .init(rawValue: "")
-        }
+        
         super.init(frame: .zero)
         initialize()
+        resetCursorStateIfNeeded()
     }
     
     required public init?(coder: NSCoder) {
         inputUnitCount = 4
-        if #available(iOS 12.0, *) {
-            textContentType = .oneTimeCode
-        } else if #available(iOS 10.0, *) {
-            #warning("todo")
-            textContentType = .name
-        } else {
-            textContentType = .init(rawValue: "")
-        }
+        //style = .border
+        style = .underline
         super.init(coder: coder)
         initialize()
     }
-    
-    //    - (instancetype)initWithFrame:(CGRect)frame {
-    //        if (self = [super initWithFrame:frame]) {
-    //            inputUnitCount = 4;
-    //            [self initialize];
-    //        }
-    //
-    //        return self;
-    //    }
-    //
-    //
-    //    - (instancetype)initWithCoder:(NSCoder *)aDecoder {
-    //        if (self = [super initWithCoder:aDecoder]) {
-    //
-    //            [self initialize];
-    //        }
-    //
-    //        return self;
-    //    }
-    //
-    //
-    
-    
-    
+
     func initialize() {
         backgroundColor = .clear
-        isOpaque = false
-        
-        unitSpace = 12
-        
-        borderRadius = 0
-        borderWidth = 1
-        
-        /**
-         Supporting iOS12 SMS verification code, keyboardType must be UIKeyboardTypeNumberPad to localizable.
-         
-         Must set textContentType to UITextContentTypeOneTimeCode
-         */
         
         tintColor = UIColor.lightGray
-        trackTintColor = .orange
-        cursorColor = .orange
-        
-        
-        cursorLayer.backgroundColor = cursorColor.cgColor
+        cursorLayer.backgroundColor = cursorColor?.cgColor
         let point = UnitFieldTextPosition(offset: 0)
         let aNewRange = UnitFieldTextRange(start: point, end: point)
         selectedTextRange = aNewRange
@@ -376,7 +364,7 @@ open class UnitField: UIControl {
         
         if result {
             sendActions(for: .editingDidBegin)
-            //[[NSNotificationCenter defaultCenter] postNotificationName:WLUnitFieldDidBecomeFirstResponderNotification object:nil];
+            NotificationCenter.default.post(name: .unitFieldDidBecomeFirstResponderNotification, object: self)
         }
         return result
     }
@@ -390,25 +378,22 @@ open class UnitField: UIControl {
         resetCursorStateIfNeeded()
         if result {
             sendActions(for: .editingDidEnd)
-            //            [[NSNotificationCenter defaultCenter] postNotificationName:WLUnitFieldDidResignFirstResponderNotification object:nil];
+            NotificationCenter.default.post(name: .unitFieldDidResignFirstResponderNotification, object: self)
         }
         return result
     }
-    
-    
     
     open override func draw(_ rect: CGRect) {
         /*
          *  绘制的线条具有宽度，因此在绘制时需要考虑该因素对绘制效果的影响。
          */
-        let width = (Int(rect.size.width) + Int(unitSpace)) / Int(inputUnitCount) - Int(unitSpace)
-        let height = Int(rect.size.height)
+        let width = (rect.size.width + CGFloat(unitSpace)) / CGFloat(inputUnitCount) - unitSpace
+        let height = rect.size.height
         let unitSize = CGSize(width: width, height: height)
         mCtx = UIGraphicsGetCurrentContext();
         
-        self.fill(rect: rect, unitSize: unitSize)
-        self.drawBorder(rect: rect, unitSize: unitSize)
-        
+        fill(rect: rect, unitSize: unitSize)
+        drawBorder(rect: rect, unitSize: unitSize)
         drawText(rect: rect, unitSize: unitSize)
         drawTrackBorder(rect: rect, unitSize: unitSize)
     }
@@ -425,14 +410,15 @@ open class UnitField: UIControl {
         invalidateIntrinsicContentSize()
     }
     
-    
     /**
      绘制背景色，以及剪裁绘制区域
      
      @param rect 控件绘制的区域
      */
     func fill(rect: CGRect, unitSize: CGSize) {
-        mBackgroundColor.setFill()
+        guard let color = unitBackgroundColor else {
+            return
+        }
         
         let radius = style == .border ? borderRadius : 0
         
@@ -441,16 +427,13 @@ open class UnitField: UIControl {
             mCtx?.addPath(bezierPath.cgPath)
         } else {
             for i in 0 ..< inputUnitCount {
-                //            CGRect unitRect = CGRectMake(i * (unitSize.width + unitSpace),
-                //                                         0,
-                //                                         unitSize.width,
-                //                                         unitSize.height);
-                //            unitRect = CGRectInset(unitRect, _borderWidth * 0.5, _borderWidth * 0.5);
-                //            UIBezierPath *bezierPath = [UIBezierPath bezierPathWithRoundedRect:unitRect cornerRadius:radius];
-                //            CGContextAddPath(mCtx, bezierPath.CGPath);
+                var unitRect = CGRect(x: CGFloat(i) * (unitSize.width + CGFloat(unitSpace)), y: 0, width: unitSize.width, height: unitSize.height)
+                unitRect = unitRect.insetBy(dx: borderWidth * 0.5, dy: borderWidth * 0.5)
+                let bezierPath = UIBezierPath(roundedRect: unitRect, cornerRadius: radius)
+                mCtx?.addPath(bezierPath.cgPath)
             }
         }
-        
+        mCtx?.setFillColor(color.cgColor)
         mCtx?.fillPath()
     }
     
@@ -469,53 +452,83 @@ open class UnitField: UIControl {
      */
     func drawBorder(rect: CGRect, unitSize: CGSize) {
         
-        //    CGRect bounds = CGRectInset(rect, _borderWidth * 0.5, _borderWidth * 0.5);
-        //
-        //    if (_style == WLUnitFieldStyleBorder) {
-        //        [self.tintColor setStroke];
-        //        CGContextSetLineWidth(mCtx, _borderWidth);
-        //        CGContextSetLineCap(mCtx, kCGLineCapRound);
-        //
-        //        if (unitSpace < 2) {
-        //            UIBezierPath *bezierPath = [UIBezierPath bezierPathWithRoundedRect:bounds cornerRadius:_borderRadius];
-        //            CGContextAddPath(mCtx, bezierPath.CGPath);
-        //
-        //            for (int i = 1; i < inputUnitCount; ++i) {
-        //                CGContextMoveToPoint(mCtx, (i * unitSize.width), 0);
-        //                CGContextAddLineToPoint(mCtx, (i * unitSize.width), (unitSize.height));
-        //            }
-        //
-        //        } else {
-        //            for (int i = (int)characters.count; i < inputUnitCount; i++) {
-        //                CGRect unitRect = CGRectMake(i * (unitSize.width + unitSpace),
-        //                                             0,
-        //                                             unitSize.width,
-        //                                             unitSize.height);
-        //                unitRect = CGRectInset(unitRect, _borderWidth * 0.5, _borderWidth * 0.5);
-        //                UIBezierPath *bezierPath = [UIBezierPath bezierPathWithRoundedRect:unitRect cornerRadius:_borderRadius];
-        //                CGContextAddPath(mCtx, bezierPath.CGPath);
-        //            }
-        //        }
-        //
-        //        CGContextDrawPath(mCtx, kCGPathStroke);
-        //    }
-        //    else {
-        //
-        //        [self.tintColor setFill];
-        //        for (int i = (int)characters.count; i < inputUnitCount; i++) {
-        //            CGRect unitLineRect = CGRectMake(i * (unitSize.width + unitSpace),
-        //                                         unitSize.height - _borderWidth,
-        //                                         unitSize.width,
-        //                                         _borderWidth);
-        //            UIBezierPath *bezierPath = [UIBezierPath bezierPathWithRoundedRect:unitLineRect cornerRadius:_borderRadius];
-        //            CGContextAddPath(mCtx, bezierPath.CGPath);
-        //        }
-        //
-        //        CGContextDrawPath(mCtx, kCGPathFill);
-        //    }
+        if style == .border {
+            tintColor.setStroke()
+            mCtx?.setLineWidth(borderWidth)
+            mCtx?.setLineCap(.round)
+            if unitSpace < 2 {
+                let bounds = rect.insetBy(dx: borderWidth * 0.5, dy: borderWidth * 0.5)
+                let bezierPath = UIBezierPath(roundedRect: bounds, cornerRadius: borderRadius)
+                mCtx?.addPath(bezierPath.cgPath)
+                (1..<inputUnitCount).forEach {
+                    mCtx?.move(to: CGPoint(x: (CGFloat($0) * unitSize.width), y: 0))
+                    mCtx?.addLine(to: CGPoint(x: CGFloat($0) * unitSize.width, y: unitSize.height))
+                }
+            } else {
+                (UInt(characters.count) ..< self.inputUnitCount).forEach {
+                    var unitRect = CGRect(x: CGFloat($0) * (unitSize.width + unitSpace), y: 0, width: unitSize.width, height: unitSize.height)
+                    unitRect = unitRect.insetBy(dx: borderWidth * 0.5, dy: borderWidth * 0.5)
+                    let bezierPath = UIBezierPath(roundedRect: unitRect, cornerRadius: borderRadius)
+                    mCtx?.addPath(bezierPath.cgPath)
+                }
+            }
+            
+            mCtx?.drawPath(using: .stroke)
+        } else {
+            tintColor.setFill()
+            (UInt(characters.count) ..< self.inputUnitCount).forEach {
+                let unitRect = CGRect(x: CGFloat($0) * (unitSize.width + unitSpace),
+                                      y: unitSize.height - borderWidth,
+                                      width: unitSize.width,
+                                      height: borderWidth)
+                let bezierPath = UIBezierPath(roundedRect: unitRect, cornerRadius: borderRadius)
+                mCtx?.addPath(bezierPath.cgPath)
+            }
+            
+            mCtx?.drawPath(using: .fill)
+        }
     }
     
     
+    /**
+     绘制跟踪框，如果指定的`trackTintColor`为 nil 则不绘制
+     
+     @param rect 控件绘制的区域
+     @param unitSize 单个 input unit 占据的尺寸
+     */
+    func drawTrackBorder(rect: CGRect, unitSize: CGSize) {
+        guard let color = trackTintColor else {
+            return
+        }
+        
+        if style == .border {
+            guard unitSpace > 1 else {
+                return
+            }
+            color.setStroke()
+            mCtx?.setLineWidth(borderWidth)
+            mCtx?.setLineCap(.round)
+            (0..<characters.count).forEach {
+                var unitRect = CGRect(x: CGFloat($0) * (unitSize.width + unitSpace), y: 0, width: unitSize.width, height: unitSize.height)
+                unitRect = unitRect.insetBy(dx: borderWidth * 0.5, dy: borderWidth * 0.5)
+                let bezierPath = UIBezierPath(roundedRect: unitRect, cornerRadius: borderRadius)
+                mCtx?.addPath(bezierPath.cgPath)
+            }
+            mCtx?.drawPath(using: .stroke)
+        } else {
+            color.setFill()
+            (0..<characters.count).forEach {
+                let unitRect = CGRect(x: CGFloat($0) * (unitSize.width + unitSpace),
+                                      y: unitSize.height - borderWidth,
+                                      width: unitSize.width,
+                                      height: borderWidth)
+                let bezierPath = UIBezierPath(roundedRect: unitRect, cornerRadius: borderRadius)
+                mCtx?.addPath(bezierPath.cgPath)
+            }
+            
+            mCtx?.drawPath(using: .fill)
+        }
+    }
     /**
      绘制文本
      
@@ -534,19 +547,17 @@ open class UnitField: UIControl {
                     NSAttributedString.Key.font: textFont]
         
         for i in 0 ..< characters.count {
-            let unitRect = CGRect(x: i * (Int(unitSize.width) + Int(unitSpace)), y: 0, width: Int(unitSize.width), height: Int(unitSize.height))
-            
+            let unitRect = CGRect(x: CGFloat(i) * (unitSize.width + unitSpace), y: 0, width: unitSize.width, height: unitSize.height)
             
             let yOffset = style == .border ? 0 : borderWidth
             
             if isSecureTextEntry {
-                //                CGRect drawRect = CGRectInset(unitRect,
-                //                                              (unitRect.size.width - _textFont.pointSize / 2) / 2,
-                //                                              (unitRect.size.height - _textFont.pointSize / 2) / 2);
-                //                drawRect.size.height -= yOffset;
-                //                [_textColor setFill];
-                //                CGContextAddEllipseInRect(mCtx, drawRect);
-                //                CGContextFillPath(mCtx);
+                var drawRect = unitRect.insetBy(dx: (unitRect.size.width - textFont.pointSize / 2) / 2,
+                                                dy: (unitRect.size.height - textFont.pointSize / 2) / 2)
+                drawRect.size.height -= yOffset
+                textColor.setFill()
+                mCtx?.addEllipse(in: drawRect)
+                mCtx?.fillPath()
             } else {
                 let subString = NSString(string: String(characters[i]))
                 
@@ -560,70 +571,21 @@ open class UnitField: UIControl {
         }
     }
     
-    
-    /**
-     绘制跟踪框，如果指定的`trackTintColor`为 nil 则不绘制
-     
-     @param rect 控件绘制的区域
-     @param unitSize 单个 input unit 占据的尺寸
-     */
-    func drawTrackBorder(rect: CGRect, unitSize: CGSize) {
-        //    if (_trackTintColor == nil) return;
-        //
-        //    if (_style == WLUnitFieldStyleBorder) {
-        //        if (unitSpace < 2) return;
-        //
-        //        [_trackTintColor setStroke];
-        //        CGContextSetLineWidth(mCtx, _borderWidth);
-        //        CGContextSetLineCap(mCtx, kCGLineCapRound);
-        //
-        //        for (int i = 0; i < characters.count; i++) {
-        //            CGRect unitRect = CGRectMake(i * (unitSize.width + unitSpace),
-        //                                         0,
-        //                                         unitSize.width,
-        //                                         unitSize.height);
-        //            unitRect = CGRectInset(unitRect, _borderWidth * 0.5, _borderWidth * 0.5);
-        //            UIBezierPath *bezierPath = [UIBezierPath bezierPathWithRoundedRect:unitRect cornerRadius:_borderRadius];
-        //            CGContextAddPath(mCtx, bezierPath.CGPath);
-        //        }
-        //
-        //        CGContextDrawPath(mCtx, kCGPathStroke);
-        //    }
-        //    else {
-        //        [_trackTintColor setFill];
-        //
-        //        for (int i = 0; i < characters.count; i++) {
-        //            CGRect unitLineRect = CGRectMake(i * (unitSize.width + unitSpace),
-        //                                             unitSize.height - _borderWidth,
-        //                                             unitSize.width,
-        //                                             _borderWidth);
-        //            UIBezierPath *bezierPath = [UIBezierPath bezierPathWithRoundedRect:unitLineRect cornerRadius:_borderRadius];
-        //            CGContextAddPath(mCtx, bezierPath.CGPath);
-        //        }
-        //
-        //        CGContextDrawPath(mCtx, kCGPathFill);
-        //    }
-        
-    }
-    
     func resetCursorStateIfNeeded() {
         DispatchQueue.main.async {
-            //            self->_cursorLayer.hidden = !self.isFirstResponder || self->_cursorColor == nil || self->inputUnitCount == self->characters.count;
-            
-            self.cursorLayer.isHidden = !self.isFirstResponder || self.inputUnitCount == self.characters.count
+            self.cursorLayer.isHidden = !self.isFirstResponder || self.inputUnitCount == self.characters.count || self.cursorColor == nil
             if self.cursorLayer.isHidden {
                 return
             }
             
-            let width = (self.bounds.size.width + CGFloat(self.unitSpace)) / CGFloat(self.inputUnitCount) - CGFloat(self.unitSpace)
-            let height = self.bounds.size.height
-            let unitSize = CGSize(width: width, height: height)
+            let unitWidth = (self.bounds.size.width + CGFloat(self.unitSpace)) / CGFloat(self.inputUnitCount) - CGFloat(self.unitSpace)
+            let unitHeight = self.bounds.size.height
             
-            var unitRect = CGRect(x: CGFloat(self.characters.count) * (CGFloat(unitSize.width) + CGFloat(self.unitSpace)),
+            var unitRect = CGRect(x: CGFloat(self.characters.count) * (unitWidth + CGFloat(self.unitSpace)),
                                   y: 0,
-                                  width: CGFloat(unitSize.width),
-                                  height: CGFloat(unitSize.height))
-            unitRect = unitRect.insetBy(dx: unitRect.size.width / 2 - 1,
+                                  width: unitWidth,
+                                  height: unitHeight)
+            unitRect = unitRect.insetBy(dx: unitWidth / 2 - 1,
                                         dy: (unitRect.size.height - self.textFont.pointSize) / 2)
             
             let yOffset = self.style == .border ? 0 : self.borderWidth
@@ -637,35 +599,9 @@ open class UnitField: UIControl {
         }
     }
     
-    // UITextInput 必须有的属性
-    public var selectedTextRange: UITextRange?
-    public var markedTextStyle: [NSAttributedString.Key : Any]?
-    public var markedTextRange: UITextRange? = nil
-    public var inputDelegate: UITextInputDelegate?
-    public lazy var tokenizer: UITextInputTokenizer = UITextInputStringTokenizer(textInput: self)
-    
-    //@dynamic text;
-    //@synthesize selectedTextRange = _selectedTextRange;
-    
-    // UITextInputTraits 代理中的属性
-    public var isSecureTextEntry: Bool = false {
-        didSet {
-            resetCursorStateIfNeeded()
-        }
-    }
-    
-    //@property(null_unspecified,nonatomic,copy) IBInspectable UITextContentType textContentType NS_AVAILABLE_IOS(10_0); // default is nil
-    public var textContentType: UITextContentType
-    
-    public var keyboardType: UIKeyboardType = .numberPad
-    public var returnKeyType: UIReturnKeyType = .done
-    public var enablesReturnKeyAutomatically: Bool = true
-    public var autocorrectionType: UITextAutocorrectionType = .no
-    public var autocapitalizationType: UITextAutocapitalizationType = .none
 }
 
-// UITextInput implement.
-// MARK: UITextInput
+// MARK: UITextInput implement.
 extension UnitField: UITextInput {
     
     public func deleteBackward() {
@@ -785,7 +721,7 @@ extension UnitField: UITextInput {
     public func caretRect(for position: UITextPosition) -> CGRect {
         .null
     }
-    // - (NSArray<UITextSelectionRect *> *)selectionRectsForRange:(UnitFieldTextRange *)range { return nil; }
+    
     public func selectionRects(for range: UITextRange) -> [UITextSelectionRect] {
         return []
     }
@@ -811,7 +747,7 @@ extension UnitField: UITextInput {
     }
     
     public func insertText(_ text: String) {
-        if text == "\n" {
+        guard text != "\n" else {
             _ = resignFirstResponder()
             return
         }
@@ -820,20 +756,18 @@ extension UnitField: UITextInput {
             return
         }
         
-        if (characters.count >= inputUnitCount) {
+        guard characters.count < inputUnitCount else {
             if autoResignFirstResponderWhenInputFinished {
                 _ = resignFirstResponder()
             }
-            return;
+            return
+        }
+        let range = Range<Int>(uncheckedBounds: (lower: (self.text?.count ?? 0), upper: text.count))
+        
+        if !(self.delegate?.unitField(self, shouldChangeCharactersInRange: range, replacementString: text) ?? true) {
+            return
         }
         
-        
-        
-        //    if ([self.delegate respondsToSelector:@selector(unitField:shouldChangeCharactersInRange:replacementString:)]) {
-        //        if ([self.delegate unitField:self shouldChangeCharactersInRange:NSMakeRange(self.text.length, text.length) replacementString:text] == NO) {
-        //            return;
-        //        }
-        //    }
         self.inputDelegate?.textWillChange(self)
         
         text.forEach { (character) in
