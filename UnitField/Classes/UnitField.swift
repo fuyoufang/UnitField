@@ -219,6 +219,8 @@ open class UnitField: UIControl {
         }
     }
     
+    // #F74C31
+    public var tipErrorColor: UIColor = UIColor(red: 247.0 / 255.0, green: 76 / 255.0, blue: 49 / 255.0, alpha: 1)
     /**
      当输入完成后，是否需要自动取消第一响应者。默认为 NO。
      */
@@ -333,6 +335,17 @@ open class UnitField: UIControl {
         }
         
         setNeedsDisplay()
+    }
+    
+    var isCodeError: Bool = false
+    
+    public func tipError() {
+        if inputUnitCount == (text?.count ?? 0) {
+            //tipErrorColor
+            isCodeError = true
+            self.setNeedsDisplay()
+        }
+        
     }
     
     // MARK: Event
@@ -498,7 +511,8 @@ open class UnitField: UIControl {
      @param unitSize 单个 input unit 占据的尺寸
      */
     func drawTrackBorder(rect: CGRect, unitSize: CGSize) {
-        guard let color = trackTintColor else {
+        
+        guard let color = isCodeError ? tipErrorColor : trackTintColor else {
             return
         }
         
@@ -609,6 +623,7 @@ extension UnitField: UITextInput {
         guard hasText else {
             return
         }
+        isCodeError = false
         inputDelegate?.textWillChange(self)
         characters.removeLast()
         sendActions(for: .editingChanged)
@@ -756,7 +771,7 @@ extension UnitField: UITextInput {
         guard text != " " else {
             return
         }
-        
+        isCodeError = false
         guard characters.count < inputUnitCount else {
             if autoResignFirstResponderWhenInputFinished {
                 _ = resignFirstResponder()

@@ -25,8 +25,14 @@ class ViewController: UIViewController {
         
         unitField.rx
             .text
-            .subscribe { (test) in
-                debugPrint("current text: \(test ?? "")")
+            .compactMap { $0 }
+            .subscribe { [weak self] (text) in
+                guard let self = self else { return }
+                debugPrint("current text: \(text)")
+                if text.count == 4 && text != "1111" {
+                    self.unitField.tipError()
+                }
+                
             } onError: { (error) in
                 debugPrint("error:\(error)")
             } onCompleted: {
