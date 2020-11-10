@@ -353,7 +353,7 @@ open class UnitField: UIControl {
                     $0.right.equalToSuperview()
                 }
 
-                $0.bottom.equalToSuperview().offset(-8)
+                $0.bottom.equalToSuperview()
                 $0.height.equalTo(2)
 
                 if let p = preLineView {
@@ -387,8 +387,7 @@ open class UnitField: UIControl {
     public func tipError() {
         if inputUnitCount == (text?.count ?? 0) {
             isCodeError = true
-//            self.setNeedsDisplay()
-            
+            self.setNeedsDisplay()
             borderLineViews.forEach {
                 $0.layer.removeAnimation(forKey: loadingAnimationKey)
                 shakeAnimation(layer: $0.layer)
