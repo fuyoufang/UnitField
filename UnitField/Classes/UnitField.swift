@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import SnapKit
 
 extension Notification.Name {
     public static let unitFieldDidBecomeFirstResponderNotification = Notification.Name(rawValue: "UnitFieldDidBecomeFirstResponderNotification")
@@ -294,6 +295,8 @@ open class UnitField: UIControl {
     var mCtx: CGContext?
     var mMarkedText: String? = nil
     
+    var borderLineViews = [UIView]()
+    
     // MARK: Initialize
     
     public convenience init(inputUnitCount count: UInt) {
@@ -335,17 +338,88 @@ open class UnitField: UIControl {
         }
         
         setNeedsDisplay()
+        
+        var preLineView: UIView?
+        (0..<inputUnitCount).forEach { (index) in
+            let lineView = UIView()
+            lineView.backgroundColor = tintColor
+            addSubview(lineView)
+            lineView.snp.makeConstraints {
+                if index == 0 {
+                    $0.left.equalToSuperview()
+                }
+
+                if index == (inputUnitCount - 1) {
+                    $0.right.equalToSuperview()
+                }
+
+                $0.bottom.equalToSuperview().offset(-8)
+                $0.height.equalTo(2)
+
+                if let p = preLineView {
+                    $0.left.equalTo(p.snp.right).offset(unitSpace)
+                    $0.width.equalTo(p)
+                }
+            }
+            borderLineViews.append(lineView)
+            preLineView = lineView
+        }
+        
+        
     }
     
     var isCodeError: Bool = false
     
+    public func tipLoading() {
+        borderLineViews.enumerated().forEach {
+            $1.layer.removeAllAnimations()
+            switch ($0 % 3) {
+            case 0:
+                loadingAnimation(layer: $1.layer, values: [1, 0.4, 1])
+            case 1:
+                loadingAnimation(layer: $1.layer, values: [0.7, 0.4, 1, 0.7])
+            default:
+                loadingAnimation(layer: $1.layer, values: [0.4, 1, 0.4])
+            }
+        }
+    }
+    
     public func tipError() {
         if inputUnitCount == (text?.count ?? 0) {
-            //tipErrorColor
             isCodeError = true
-            self.setNeedsDisplay()
+//            self.setNeedsDisplay()
+            
+            borderLineViews.forEach {
+                $0.layer.removeAnimation(forKey: loadingAnimationKey)
+                shakeAnimation(layer: $0.layer)
+            }
         }
+    }
+    
+    let loadingAnimationKey = "loadingAnimationKey"
+    func loadingAnimation(layer: CALayer, values: [Any]?) {
+        let animation = CAKeyframeAnimation(keyPath: "opacity")
+        animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        animation.values = values
+        animation.autoreverses = true
+        animation.duration = 0.8
+        animation.repeatCount = MAXFLOAT
+        layer.add(animation, forKey: loadingAnimationKey)
+    }
+    
+    func shakeAnimation(layer: CALayer) {
+        let position = layer.position
+        let x = CGPoint(x: position.x + 10, y: position.y)
+        let y = CGPoint(x: position.x - 10, y: position.y)
         
+        let animation = CABasicAnimation(keyPath: "position")
+        animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        animation.fromValue = x
+        animation.toValue = y
+        animation.autoreverses = true
+        animation.duration = 0.04
+        animation.repeatCount = 4
+        layer.add(animation, forKey: nil)
     }
     
     // MARK: Event
@@ -441,8 +515,12 @@ open class UnitField: UIControl {
             mCtx?.addPath(bezierPath.cgPath)
         } else {
             for i in 0 ..< inputUnitCount {
-                var unitRect = CGRect(x: CGFloat(i) * (unitSize.width + CGFloat(unitSpace)), y: 0, width: unitSize.width, height: unitSize.height)
-                unitRect = unitRect.insetBy(dx: borderWidth * 0.5, dy: borderWidth * 0.5)
+                var unitRect = CGRect(x: CGFloat(i) * (unitSize.width + CGFloat(unitSpace)),
+                                      y: 0,
+                                      width: unitSize.width,
+                                      height: unitSize.height)
+                unitRect = unitRect.insetBy(dx: borderWidth * 0.5,
+                                            dy: borderWidth * 0.5)
                 let bezierPath = UIBezierPath(roundedRect: unitRect, cornerRadius: radius)
                 mCtx?.addPath(bezierPath.cgPath)
             }
@@ -489,17 +567,9 @@ open class UnitField: UIControl {
             
             mCtx?.drawPath(using: .stroke)
         } else {
-            tintColor.setFill()
             (UInt(characters.count) ..< self.inputUnitCount).forEach {
-                let unitRect = CGRect(x: CGFloat($0) * (unitSize.width + unitSpace),
-                                      y: unitSize.height - borderWidth,
-                                      width: unitSize.width,
-                                      height: borderWidth)
-                let bezierPath = UIBezierPath(roundedRect: unitRect, cornerRadius: borderRadius)
-                mCtx?.addPath(bezierPath.cgPath)
+                borderLineViews[Int($0)].backgroundColor = tintColor
             }
-            
-            mCtx?.drawPath(using: .fill)
         }
     }
     
@@ -531,17 +601,9 @@ open class UnitField: UIControl {
             }
             mCtx?.drawPath(using: .stroke)
         } else {
-            color.setFill()
             (0..<characters.count).forEach {
-                let unitRect = CGRect(x: CGFloat($0) * (unitSize.width + unitSpace),
-                                      y: unitSize.height - borderWidth,
-                                      width: unitSize.width,
-                                      height: borderWidth)
-                let bezierPath = UIBezierPath(roundedRect: unitRect, cornerRadius: borderRadius)
-                mCtx?.addPath(bezierPath.cgPath)
+                borderLineViews[Int($0)].backgroundColor = color
             }
-            
-            mCtx?.drawPath(using: .fill)
         }
     }
     /**

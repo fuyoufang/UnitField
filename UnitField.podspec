@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'UnitField'
-  s.version          = '0.3.1'
+  s.version          = '0.3.2'
   s.summary          = 'This is an elegant and concise password/verification code text field.'
 
   s.description      = <<-DESC
@@ -25,5 +25,7 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '9.0'
   s.swift_version = '5.0'
   s.source_files = 'UnitField/Classes/**/*'
-  
+    
+  s.dependency 'SnapKit', '~> 4.2.0'
+
 end
