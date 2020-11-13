@@ -384,6 +384,12 @@ open class UnitField: UIControl {
         }
     }
     
+    public func stopLoading() {
+        borderLineViews.forEach {
+            $0.layer.removeAnimation(forKey: loadingAnimationKey)
+        }
+    }
+    
     public func tipError() {
         if inputUnitCount == (text?.count ?? 0) {
             isCodeError = true
