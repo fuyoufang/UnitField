@@ -845,7 +845,9 @@ extension UnitField: UITextInput {
             }
             return
         }
-        let range = Range<Int>(uncheckedBounds: (lower: (self.text?.count ?? 0), upper: text.count))
+        let lower = self.text?.count ?? 0
+        let upper = lower + text.count
+        let range = Range<Int>(uncheckedBounds: (lower: lower, upper: upper))
         
         guard self.delegate?.unitField(self, shouldChangeCharactersInRange: range, replacementString: text) ?? true else {
             return

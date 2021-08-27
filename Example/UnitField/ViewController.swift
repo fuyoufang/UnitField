@@ -10,7 +10,7 @@ import UIKit
 import RxCocoa
 import RxSwift
 import UnitField
-import RxUnitField
+//import UnitFieldRx
 
 class ViewController: UIViewController {
     @IBOutlet weak var scrollView: UIScrollView!

@@ -1,67 +1,45 @@
 PODS:
-  - FBSnapshotTestCase (2.1.4):
-    - FBSnapshotTestCase/SwiftSupport (= 2.1.4)
-  - FBSnapshotTestCase/Core (2.1.4)
-  - FBSnapshotTestCase/SwiftSupport (2.1.4):
-    - FBSnapshotTestCase/Core
-  - Nimble (7.3.4)
-  - Nimble-Snapshots (6.3.0):
-    - Nimble-Snapshots/Core (= 6.3.0)
-  - Nimble-Snapshots/Core (6.3.0):
-    - FBSnapshotTestCase (~> 2.0)
-    - Nimble (~> 7.0)
-  - Quick (1.2.0)
-  - RxCocoa (5.1.1):
-    - RxRelay (~> 5)
-    - RxSwift (~> 5)
-  - RxRelay (5.1.1):
-    - RxSwift (~> 5)
-  - RxSwift (5.1.1)
-  - RxUnitField (0.2.0):
+  - RxCocoa (6.2.0):
+    - RxRelay (= 6.2.0)
+    - RxSwift (= 6.2.0)
+  - RxRelay (6.2.0):
+    - RxSwift (= 6.2.0)
+  - RxSwift (6.2.0)
+  - SnapKit (4.2.0)
+  - UnitField (0.3.4):
+    - UnitField/Core (= 0.3.4)
+  - UnitField/Core (0.3.4):
+    - SnapKit (~> 4.2.0)
+  - UnitField/Rx (0.3.4):
     - RxCocoa
     - RxSwift
-    - UnitField (~> 0.3.0)
-  - SnapKit (4.2.0)
-  - UnitField (0.3.2):
-    - SnapKit (~> 4.2.0)
+    - UnitField/Core
 
 DEPENDENCIES:
-  - FBSnapshotTestCase (~> 2.1.4)
-  - Nimble (~> 7.0)
-  - Nimble-Snapshots (~> 6.3.0)
-  - Quick (~> 1.2.0)
-  - RxUnitField (from `../Extension`)
+  - RxCocoa
+  - RxSwift
+  - SnapKit (~> 4.2.0)
   - UnitField (from `../`)
+  - UnitField/Rx (from `../`)
 
 SPEC REPOS:
   trunk:
-    - FBSnapshotTestCase
-    - Nimble
-    - Nimble-Snapshots
-    - Quick
     - RxCocoa
     - RxRelay
     - RxSwift
     - SnapKit
 
 EXTERNAL SOURCES:
-  RxUnitField:
-    :path: "../Extension"
   UnitField:
     :path: "../"
 
 SPEC CHECKSUMS:
-  FBSnapshotTestCase: 094f9f314decbabe373b87cc339bea235a63e07a
-  Nimble: 051e3d8912d40138fa5591c78594f95fb172af37
-  Nimble-Snapshots: f5459b5b091678dc942d03ec4741cacb58ba4a52
-  Quick: 58d203b1c5e27fff7229c4c1ae445ad7069a7a08
-  RxCocoa: 32065309a38d29b5b0db858819b5bf9ef038b601
-  RxRelay: d77f7d771495f43c556cbc43eebd1bb54d01e8e9
-  RxSwift: 81470a2074fa8780320ea5fe4102807cb7118178
-  RxUnitField: b5411a7b793ebde69218f9715e56f0da36e3697d
+  RxCocoa: 4baf94bb35f2c0ab31bc0cb9f1900155f646ba42
+  RxRelay: e72dbfd157807478401ef1982e1c61c945c94b2f
+  RxSwift: d356ab7bee873611322f134c5f9ef379fa183d8f
   SnapKit: fe8a619752f3f27075cc9a90244d75c6c3f27e2a
-  UnitField: 5904a622857f7f0df13ce6c76a5155dc5c070cba
+  UnitField: b70049af066cc41f3a676b40f13c6b5676bac22c
 
-PODFILE CHECKSUM: 8595a69b854d7c18898f050fe6025c8f4e43cb4e
+PODFILE CHECKSUM: 0e1b37c9214160745d47bfd337deef314940d8d1
 
-COCOAPODS: 1.10.0
+COCOAPODS: 1.10.2

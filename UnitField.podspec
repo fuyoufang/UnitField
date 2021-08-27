@@ -8,11 +8,11 @@
 
 Pod::Spec.new do |s|
   s.name             = 'UnitField'
-  s.version          = '0.3.3'
+  s.version          = '0.3.4'
   s.summary          = 'This is an elegant and concise password/verification code text field.'
 
   s.description      = <<-DESC
-  This is an elegant and concise password/verification code text field. You can use WLUnitField just like UITextField.
+  This is an elegant and concise password/verification code text field. You can use UnitField just like UITextField.
                        DESC
 
   s.homepage         = 'https://github.com/fuyoufang/UnitField'
@@ -20,12 +20,24 @@ Pod::Spec.new do |s|
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'fuyoufang' => 'fuyoufang@163.com' }
   s.source           = { :git => 'https://github.com/fuyoufang/UnitField.git', :tag => s.version.to_s }
-  # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
-
+  
   s.ios.deployment_target = '9.0'
   s.swift_version = '5.0'
-  s.source_files = 'UnitField/Classes/**/*'
-    
-  s.dependency 'SnapKit', '~> 4.2.0'
+  
+  
+  s.default_subspec = "Core"
+  
+  s.subspec "Core" do |ss|
+      ss.dependency 'SnapKit', '~> 4.2.0'
+      ss.source_files = 'UnitField/Classes/**/*'
+      ss.framework  = "Foundation"
+  end
+  
+  s.subspec 'Rx' do |rx|
+      rx.dependency "UnitField/Core"
+      rx.source_files = 'UnitField/Rx/**/*'
+      rx.dependency 'RxSwift'
+      rx.dependency 'RxCocoa'
+  end
 
 end
